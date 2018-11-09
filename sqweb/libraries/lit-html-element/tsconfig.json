@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "declaration": true,
+    "target": "es2015",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "noEmitHelpers": true,
+    "outDir": ".",
+    "lib": [
+      "es5",
+      "es6",
+      "dom",
+      "es2015.core",
+      "es2015.collection",
+      "es2015.generator",
+      "es2015.iterable",
+      "es2015.promise",
+      "es2015.proxy",
+      "es2015.reflect",
+      "es2015.symbol",
+      "es2015.symbol.wellknown",
+      "esnext.asynciterable"
+    ]
+  },
+  "exclude": [
+    "lib/",
+    "./*.d.ts",
+    "node_modules/lit-html/",
+    "node_modules/typescript-template-language-service-decorator/",
+    "node_modules/vscode-html-languageservice/"
+  ],
+  "compileOnSave": true
+}

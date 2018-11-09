@@ -2,6 +2,8 @@ const express = require('express');
 const http = require('http');
 const socket = require('socket.io');
 
+const classifier = require('./my_libs/classificator.js');
+
 /*
 Application setup
         web appliction files in file sqweb
@@ -23,14 +25,38 @@ Client setup
  */
 
 var client = socket(server);
-clietn.sockets.on('connection', clientConnection);
+client.sockets.on('connection', clientConnection);
 
 function clientConnection(socket){
     console.log('New browser instance');
-    socket.on('runClassifiaction',Classification);
+    socket.on('getInfo',getInfo);
 }
 
-function Classification(data) {
+//client confirmed
+function getInfo(data) {
+    //receive anotations
+
+    socket.on('getImage',getImg);
+}
+
+//receive image
+function getImg(data) {
+
+
+    //run classification
+}
+
+
+function Classification(image) {
     //todo
+
+    //load library
+
+
+    //classify
+
+    //save to library
+
+    //send results to client
 }
 

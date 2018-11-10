@@ -36,7 +36,9 @@ class DataHandler {
     saveAnnotationData() {
         renderer.refreshPage();
     }
-    saveImageData() {
+    saveImageData(result) {
+        this.myImage = result.toString();
+        console.log("Saving:" + this.myImage);
         renderer.refreshPage();
     }
 }

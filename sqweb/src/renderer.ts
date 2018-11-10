@@ -65,7 +65,11 @@ class DataHandler{
         renderer.refreshPage();
     }
 
-    saveImageData(){
+    saveImageData(result : any){
+        this.myImage = result.toString();
+
+        console.log("Saving:" + this.myImage);
+
         renderer.refreshPage();
     }
 

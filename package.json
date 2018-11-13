@@ -17,9 +17,11 @@
   },
   "homepage": "https://github.com/AnnaMoudra/VMM#readme",
   "dependencies": {
+    "bluebird": "^3.5.3",
     "express": "^4.16.4",
     "http": "0.0.0",
     "lit-html": "^0.13.0",
+    "node-fetch": "^2.3.0",
     "socket.io": "^2.1.1"
   }
 }

@@ -38,7 +38,11 @@ class DataHandler{
 
 
     getImage(){
-        return ""
+        var img = {
+            image: this.myImage
+        }
+
+        return JSON.stringify(img);
     }
 
     getAnnotation(){
@@ -92,7 +96,7 @@ class Renderer{
     }
 
     emitImage(msg: string, data:JSON){
-        console.log('sending image')
+        console.log('emitting image')
         this.client.socket.emit(msg, data);
     }
 
@@ -102,7 +106,7 @@ class Renderer{
 
     sendData(type){
         if(type == "img"){
-            this.emitImage('image', JSON.parse(this.dataHandler.getImage()));
+            this.emitImage('getImage', JSON.parse(this.dataHandler.getImage()));
             console.log("sending image")
             return;
         }
@@ -117,20 +121,40 @@ class Renderer{
     }
 
     renderApi(){
+
         const main = html`
         <style>
 
         
         </style>
-        <h2>Night Sky classifier</h2>
+        <h2>SkyQuality: light pollution classifier</h2>
         <br>
         <input-image></input-image>
         <p>Canvas:</p>
-        <canvas id="preview", width="500", height="500", style="border:1px solid #d3d3d3;">
+        <canvas id="preview", width="400", height="400", style="border:1px solid #d3d3d3;">
         Your browser does not support the HTML5 canvas tag.
         </canvas>
+        <br>
+        <button type="submit" id="send_image" value="Send" on-click="${
+            (e)=>{
+                e.preventDefault();
+                this.sendData('img');
+            }
+        }"
+        double-click="${
+            (e)=> e.preventDefault()}" >Send Image</button>
         
         `;
+
+        render(main, document.body);
+
+        if(this.dataHandler.myImage == ''){
+            console.log(document.getElementById("send_image"));
+            document.getElementById("send_image").hidden = true;
+        }
+        else {
+            document.getElementById("send_image").hidden = false;
+        }
 
         render(main, document.body);
     }

@@ -1,13 +1,24 @@
 import { html, render } from './../libraries/lit-html-element/lib/lit-extended.js';
 class AnnotationData {
+    constructor() {
+        this.time = new Date();
+        this.name = "";
+        this.sqm = "";
+    }
 }
 class Client {
     constructor(server) {
         this.ipAddress = ""; // websocket server IP address
+        this.id = null;
         this.ipAddress = server;
         this.socket = io.connect(this.ipAddress);
+        this.socket.on('generatedId', this.saveId);
         this.socket.on('disconnect', this.clientDisconnected);
         console.log("Client created");
+    }
+    saveId(data) {
+        this.id = data.Id;
+        console.log('Id saved:' + this.id);
     }
     clientDisconnected() {
         //todo
@@ -15,26 +26,38 @@ class Client {
 }
 class DataHandler {
     constructor() {
-        this.annotationData = null;
+        this.annotationData = new AnnotationData();
         this.myImage = '';
+        this.client = null;
     }
     getImage() {
         var img = {
+            id: this.client.id,
             image: this.myImage
         };
         return JSON.stringify(img);
     }
     getAnnotation() {
         const data = {
-            'type': "annotation"
+            id: this.client.id,
+            date: this.annotationData.time,
+            name: this.annotationData.name,
+            sqm: this.annotationData.sqm
         };
-        return "";
+        return JSON.stringify(data);
     }
     clearMessagesData() {
     }
-    clearForm(form, canvas) {
+    saveForm() {
     }
-    saveForm(form, canvas) {
+    saveName(value) {
+        this.annotationData.name = value;
+    }
+    saveSQM(value) {
+        this.annotationData.sqm = value;
+    }
+    saveTime(value) {
+        this.annotationData.time = new Date(value);
     }
     saveAnnotationData() {
         renderer.refreshPage();
@@ -50,6 +73,7 @@ class Renderer {
         this.version = "v0.1.1";
         this.client = new Client('http://localhost:8080');
         this.dataHandler = new DataHandler();
+        this.dataHandler.client = this.client;
     }
     emitData(msg, data) {
         console.log('sending message');
@@ -62,39 +86,60 @@ class Renderer {
     refreshPage() {
         this.renderApi();
     }
+    readyToClass() {
+    }
     sendData(type) {
         if (type == "img") {
             this.emitImage('getImage', JSON.parse(this.dataHandler.getImage()));
-            console.log("sending image");
+            this.emitData('getInfo', JSON.parse(this.dataHandler.getAnnotation()));
+            console.log("sending DATA");
+            this.dataHandler.client.socket.on('goodToClass', this.readyToClass);
             return;
         }
-        else if (type == "command") {
-            console.log("sending command");
-        }
         else {
-            console.log("annotation");
-            this.emitData('annotation', JSON.parse(this.dataHandler.getAnnotation()));
+            console.log("sending WHAT");
         }
     }
     renderApi() {
         const main = html `
         <style>
 
+        canvas{
+            background-color: #ffaab5;         
+            margin-left: 1em;
+            margin-right: 1em;
+            max-width: 30em;
+        }
+        .send_btn{
+            background-color: #51a04d;         
+            margin-left: 1em;
+            margin-right: 1em;
+            max-width: 8em;
+            font-weight: bolder;
+            border: none;
+            padding: 0.5em;
+            color: aliceblue;
+            border-radius: 0.5em;
+        }
         
         </style>
         <h2>SkyQuality: light pollution classifier</h2>
+        <input-annotation></input-annotation>
         <br>
         <input-image></input-image>
-        <p>Canvas:</p>
-        <canvas id="preview", width="400", height="400", style="border:1px solid #d3d3d3;">
+        <canvas id="preview", width="200", height="200", style="border:1px solid #d3d3d3;">
         Your browser does not support the HTML5 canvas tag.
         </canvas>
-        <br>
-        <button type="submit" id="send_image" value="Send" on-click="${(e) => {
+        <button class="send_btn" type="submit" id="send_image" value="Send" on-click="${(e) => {
             e.preventDefault();
             this.sendData('img');
         }}"
         double-click="${(e) => e.preventDefault()}" >Send Image</button>
+        <button class="send_btn" type="submit" id="send_class" value="Send" on-click="${(e) => {
+            e.preventDefault();
+            this.sendData('classify');
+        }}"
+        double-click="${(e) => e.preventDefault()}" >Classify</button>
         
         `;
         render(main, document.body);
@@ -105,43 +150,13 @@ class Renderer {
         else {
             document.getElementById("send_image").hidden = false;
         }
+        if (this.dataHandler.class == false) {
+            document.getElementById("send_class").hidden = true;
+        }
+        else {
+            document.getElementById("send_class").hidden = false;
+        }
         render(main, document.body);
-    }
-    /* 2 frames with icons*/
-    renderNotify() {
-        const messages = html `
-        <style>
-         *{
-            margin: 0;
-            padding: 0;
-            font-family: "Gill Sans", sans-serif;
-            outline: none;
-            background-color: #fdfffb;
-           
-        }
-        .main-body{
-            position: fixed;
-            margin-top: 2em;
-            margin-left: 8em;
-            padding-top: 0.2em;
-            padding-left: 3em;
-            width: 100%;
-            height: 100%;
-        }
-        h2 { position: fixed; margin-top: 0.2em;}
-        
-        </style>
-        <header-panel></header-panel>
-        <side-bar></side-bar>
-        <div class="main-body">
-        <h2>NotifyMessages</h2>
-        <br>
-        <data-preview></data-preview>
-        <frame-preview></frame-preview>
-        <send-button></send-button>
-        <br>
-        </div>`;
-        render(messages, document.body);
     }
 }
 export let renderer = new Renderer();

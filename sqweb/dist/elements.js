@@ -7,6 +7,78 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { html } from './../libraries/lit-html-element/lib/lit-extended.js';
 import { LitHTMLElement, customElement } from './../libraries/lit-html-element/LitHTMLElement.js';
 import { renderer } from "./renderer.js";
+let InputAnnotation = class InputAnnotation extends LitHTMLElement {
+    constructor() {
+        super();
+        this.name = "";
+        this.sqm = "";
+        this.time = "";
+    }
+    saveName(event) {
+        this.name = event.target.value;
+        renderer.dataHandler.saveName(this.name);
+    }
+    saveSQM(event) {
+        this.sqm = event.target.value;
+        renderer.dataHandler.saveSQM(this.sqm);
+    }
+    saveTime(event) {
+        this.time = event.target.value;
+        renderer.dataHandler.saveTime(this.time + "T00:00");
+    }
+    render() {
+        return html `
+        <style>
+        div{
+            padding: 2em;
+            margin-left: 1em;
+            margin-right: 1em;
+            background-color: #deecff;
+            max-width: 20em;
+        }
+        
+        .label{
+            margin-left: 1em;
+            
+        }
+        input{
+        display: block;
+            float: right;
+            margin-left: 0.2em;
+            margin-right: 1em;
+        }
+        
+        </style>
+        
+        <br>
+                
+        <div class="annotationInput" name="annotationInput">
+            <label class="label" for="text">Name:</label>
+            <input type="text" name="name_input" id="name_input" value="${renderer.dataHandler.annotationData.name}" 
+            on-change="${(e) => this.saveName(e)}"
+            />
+        <br>
+        <br>
+        
+            <label class="label" for="text">SQM value:</label>
+            <input type="text" name="sqm_input" id="sqm_input" value="${renderer.dataHandler.annotationData.sqm}" 
+            on-change="${(e) => this.saveSQM(e)}"
+            />
+        <br>
+        <br>
+        
+            <label class="label" for="text">Time:</label>
+            <input type="datetime-local" name="time_input" id="time_input" value="${renderer.dataHandler.annotationData.time}" 
+            on-change="${(e) => this.saveTime(e)}"
+            />
+            
+        </div>`;
+    }
+};
+InputAnnotation = __decorate([
+    customElement()
+], InputAnnotation);
+export { InputAnnotation };
 let InputImage = class InputImage extends LitHTMLElement {
     constructor() {
         super();
@@ -47,26 +119,31 @@ let InputImage = class InputImage extends LitHTMLElement {
             width: 300px;
         }
         div{
-            padding: 0;
-            margin: 0;
-            background-color: blanchedalmond;
+            background-color: blanchedalmond;         
+            padding: 2em;
+            margin-left: 1em;
+            margin-right: 1em;
+            max-width: 30em;
         }
-        
-        label{
-        
+        .label{
+            margin-left: 1em;
+            
         }
         input{
-        
+        display: block;
+            float: right;
+            margin-left: 0.2em;
+            margin-right: 1em;
         }
         </style>
                 <br>
         <div class="fileInput" name="fileInput">
-            <label class="form_label" for="text">Load image:</label>
-            <input type="file" name="img_input" id="img_input" value="" on-change="${(e) => {
+            <label class="label" for="text">Load image:</label>
+            <input type="file" name="img_input" id="img_input" value="${renderer.dataHandler.myImage}" on-change="${(e) => {
             this.uploadImage(e);
-        }}"/><br>
-            
+        }}"/>
         </div>
+        <br>
         
         
         `;

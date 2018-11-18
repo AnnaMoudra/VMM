@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/AnnaMoudra/VMM#readme",
   "dependencies": {
+    "base-64": "^0.1.0",
+    "blob": "0.0.5",
     "bluebird": "^3.5.3",
     "express": "^4.16.4",
     "http": "0.0.0",

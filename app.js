@@ -1,10 +1,7 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
-const fetch = require('node-fetch');
-const b64 = require('base-64');
 const fs = require('fs');
-var Blob = require('blob');
 
 const classifier = require('./my_libs/classificator.js');
 
@@ -46,12 +43,12 @@ var clients = [];
 */
 function clientConnection(socket){
     console.log('New browser instance');
-    id = Math.floor(Math.random()*1000);
-    cl = new Client(id, socket)
-    id_data = {
-        Id: id
-    }
-    clients[id] = client;
+    var new_id = Math.floor(Math.random()*1000);
+    var cl = new Client(new_id, socket);
+    var id_data = {
+        id: new_id
+    };
+    clients[new_id] = cl;
     socket.emit('generatedId', id_data);
     socket.on('getInfo',getInfo);
     socket.on('getImage',getImg);
@@ -65,9 +62,16 @@ function clientConnection(socket){
 */
 function getInfo(data) {
     var id = data.id;
-    clients[id].annotation.name = data.name;
-    clients[id].annotation.time = data.date;
-    clients[id].annotation.sqm = parseInt(data.sqm);
+    clients.forEach(
+        function (client) {
+            if(client.id == id){
+                console.log('info cl ID:', client.id);
+                client.annotation.name = data.name;
+                client.annotation.time = data.date;
+                client.annotation.sqm = parseInt(data.sqm);
+            }
+        });
+
 }
 
 /*
@@ -77,22 +81,45 @@ function getInfo(data) {
 */
 function getImg(data) {
     var id = data.id;
-    console.log("Img received");
+    console.log("Img received, ID: ", data.id);
     var base64Data = data.image.replace(/^data:image\/jpeg;base64,/, "");
-    fs.writeFile('./temp/in_image'+id+'.jpg', base64Data, {encoding: 'base64'}, function(err) {
+    fs.writeFile('./../temp/in_image'+id+'.jpg', base64Data, {encoding: 'base64'}, function(err) {
         console.log('File created');
     });
+    clients.forEach(
+        function (client) {
+            if(client.id == id){
+                console.log('cl ID:', client.id);
+                client.socket.emit('goodToClass', true);
+            }
+        });
 
-    console.log('saving ended');
-    clients[id].socket.emit('goodToClass', true);
 }
 
 
 function Classification(data) {
-    //todo
-    //load image
+    var id = data.id;
+    var cl;
+    clients.forEach(
+        function (client) {
+            if(client.id == id){
+                console.log('cl ID:', client.id);
+                cl = client;
+            }
+        });
+    //relative path to image from 'my_libs'
+    var img_path = './../../temp/in_image'+id+'.jpg'
+    var an = cl.annotation;
     //classify in module
+    var results = classifier.run(img_path, an);
     //save to library
+    //TODO
+    //erase from temp
+    var path = './../temp/in_image'+id+'.jpg'
+    //TODO
     //send results to client
+    //TODO
+    cl.socket.emit('results');
+
 }
 

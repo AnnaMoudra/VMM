@@ -29,12 +29,16 @@ let InputAnnotation = class InputAnnotation extends LitHTMLElement {
     render() {
         return html `
         <style>
+        body{
+            font-family: Helvetica;
+        }
         div{
             padding: 2em;
             margin-left: 1em;
             margin-right: 1em;
-            background-color: #deecff;
+            background-color: rgba(156,200,255,0.68);
             max-width: 20em;
+            border-radius: 0.5em;
         }
         
         .label{
@@ -117,13 +121,15 @@ let InputImage = class InputImage extends LitHTMLElement {
         <style>
         body{
             width: 300px;
+            font-family: Helvetica;
         }
         div{
-            background-color: blanchedalmond;         
+            background-color: rgba(255,149,36,0.55);         
             padding: 2em;
             margin-left: 1em;
             margin-right: 1em;
             max-width: 30em;
+            border-radius: 0.5em;
         }
         .label{
             margin-left: 1em;

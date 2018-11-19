@@ -1,5 +1,5 @@
 import {html, render} from './../libraries/lit-html-element/lib/lit-extended.js';
-
+//import {io} from "./renderer";
 declare global {
     const io: any;
 }
@@ -12,7 +12,10 @@ class AnnotationData{
     sqm: string = "";
 }
 
-class Client{
+/**
+ * Client  - socket.io endpoint
+ **/
+export class Client{
     ipAddress: string = ""; // websocket server IP address
     socket: any; //io.Socket;
     id: number = null;
@@ -26,7 +29,8 @@ class Client{
     }
 
     saveId(data){
-        this.id = data.Id;
+        this.id = data.id;
+        renderer.ID = data.id;
         console.log('Id saved:'+this.id);
     }
 
@@ -35,19 +39,22 @@ class Client{
     }
 }
 
+/**
+ * DataHandler - preserves user input
+ **/
 class DataHandler{
     annotationData: AnnotationData = new AnnotationData();
     myImage: string = '';
     myCanvas: HTMLImageElement;
-    client: Client = null;
+    class: boolean = false;
 
     constructor(){
     }
 
-
     getImage(){
+        console.log("sending id: ", renderer.ID);
         var img = {
-            id: this.client.id,
+            id: renderer.ID,
             image: this.myImage
         }
 
@@ -56,21 +63,13 @@ class DataHandler{
 
     getAnnotation(){
         const data = {
-            id: this.client.id,
+            id: renderer.ID,
             date: this.annotationData.time,
             name: this.annotationData.name,
             sqm: this.annotationData.sqm
         };
 
         return JSON.stringify(data);
-    }
-
-    clearMessagesData(){
-
-    }
-
-    saveForm(){
-
     }
 
     saveName(value: string){
@@ -85,73 +84,112 @@ class DataHandler{
         this.annotationData.time = new Date(value);
     }
 
-    saveAnnotationData(){
-        renderer.refreshPage();
-    }
-
     saveImageData(result : any){
         this.myImage = result.toString();
-
         console.log("Saving:" + this.myImage);
-
         renderer.refreshPage();
     }
 
 }
 
+/**
+ * Renderer singleton handles application processes
+ **/
 class Renderer{
     dataHandler: DataHandler;
     client: Client;
-    version: string = "v0.1.1";
+    version: string = "v0.0.1";
+    ID: number = 0;
 
     constructor(){
         this.client = new Client('http://localhost:8080');
         this.dataHandler = new DataHandler();
-        this.dataHandler.client = this.client;
     }
 
-
+    /**
+     * Emit Annotation data to server
+     **/
     emitData(msg: string, data:JSON){
         console.log('sending message')
         this.client.socket.emit(msg, data);
     }
 
+    /**
+     * Emit Image data to server
+     **/
     emitImage(msg: string, data:JSON){
         console.log('emitting image')
         this.client.socket.emit(msg, data);
     }
 
+
+    /**
+     * Re-render InputPage with changes.
+     **/
     refreshPage(){
         this.renderApi();
     }
 
+    /**
+     * Switch classification ready state to true and re-render page with Classify btn
+     **/
     readyToClass(){
-
+        renderer.dataHandler.class = true;
+        renderer.refreshPage();
     }
 
+    /**
+     * Handle signals from Users input
+     **/
     sendData(type){
         if(type == "img"){
             this.emitImage('getImage', JSON.parse(this.dataHandler.getImage()));
             this.emitData('getInfo', JSON.parse(this.dataHandler.getAnnotation()));
-            console.log("sending DATA");
-            this.dataHandler.client.socket.on('goodToClass', this.readyToClass)
+            console.log("Sending image and info to server.");
+            this.client.socket.on('goodToClass', this.readyToClass)
             return;
         }
+        else if (type == "classify"){
+            const data = {
+                id: renderer.ID,
+            };
+            this.client.socket.emit('runClassification', data);
+            //TODO
+            //redirect to waiting page!
+            this.renderWaiting();
+            this.client.socket.on('results', this.handleResults)
+        }
         else{
-            console.log("sending WHAT")
+            console.log("Not sure what to send :o !")
         }
     }
 
+
+    /**
+     * RenderInput GUI
+     **/
     renderApi(){
 
         const main = html`
         <style>
+        body{
+            background-image: url('../bg_img/bg90m.png');
+            font-family: Helvetica;
+        }
 
+        h2{
+            margin-top: 1em;
+            margin-left: 1em;
+            margin-right: 1em;
+            font-family: Helvetica;
+            color: rgba(23,23,26,0.89);
+        }
         canvas{
-            background-color: #ffaab5;         
+            background-color: rgba(255,41,103,0.26);         
             margin-left: 1em;
             margin-right: 1em;
             max-width: 30em;
+            border-radius: 0.02em;
         }
         .send_btn{
             background-color: #51a04d;         
@@ -161,7 +199,19 @@ class Renderer{
             font-weight: bolder;
             border: none;
             padding: 0.5em;
-            color: aliceblue;
+            color: #f2ffeb;
+            border-radius: 0.5em;
+        }
+        
+        .class_btn{
+            background-color: #d88a18;         
+            margin-left: 1em;
+            margin-right: 1em;
+            max-width: 8em;
+            font-weight: bolder;
+            border: none;
+            padding: 0.5em;
+            color: #fffdd5;
             border-radius: 0.5em;
         }
         
@@ -170,7 +220,8 @@ class Renderer{
         <input-annotation></input-annotation>
         <br>
         <input-image></input-image>
-        <canvas id="preview", width="200", height="200", style="border:1px solid #d3d3d3;">
+        <br>
+        <canvas id="preview", width="300", height="300", style="border:1px solid #d3d3d3;">
         Your browser does not support the HTML5 canvas tag.
         </canvas>
         <button class="send_btn" type="submit" id="send_image" value="Send" on-click="${
@@ -181,13 +232,18 @@ class Renderer{
             }"
         double-click="${
             (e) => e.preventDefault()}" >Send Image</button>
-        <button class="send_btn" type="submit" id="send_class" value="Send" on-click="${
+        
+        <button class="class_btn" type="submit" id="send_class" value="Send" on-click="${
             (e) => {
                 e.preventDefault();
-                this.sendData('classify');}
+                this.sendData('classify');
+            }
             }"
         double-click="${
-            (e) => e.preventDefault()}" >Classify</button>
+            (e) => {
+                e.preventDefault();
+            }
+            }" >Classify</button>
         
         `;
 
@@ -209,6 +265,52 @@ class Renderer{
         }
 
         render(main, document.body);
+    }
+
+    /**
+     * Render Waiting Page
+     **/
+    renderWaiting(){
+
+        const main = html`
+        <style>
+        body{
+            background-image: url('../bg_img/bg90m.png');
+            font-family: Helvetica;
+        }
+
+        h2{
+            margin-top: 1em;
+            margin-left: 1em;
+            margin-right: 1em;
+            color: rgba(23,23,26,0.89);
+        }
+        
+        h3{
+            margin-top: 3em;
+            margin-left: 3em;
+            margin-right: 1em;
+            color: rgb(241,105,83);
+        }
+        
+        body{
+            background-color: #deecff;
+        }
+        
+        </style>
+        
+        <h2>SkyQuality: light pollution classifier</h2>
+        <h3>Waiting for results...</h3>
+       
+        `;
+        render(main, document.body);
+    }
+
+    /**
+     * Render results of classification
+     **/
+    renderResults(){
+
     }
 
 }

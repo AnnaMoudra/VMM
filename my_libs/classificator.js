@@ -1,10 +1,38 @@
 const fs = require('fs');
 const dir = './directory';
+const dc = require('dominant-color');
+const cv = require('opencv4nodejs');
+
+function getDominantColors(ring){
+    //todo for each img in ring get dominant, if dark or white then throw away
+    //get coefs on colo scale
+
+    //save coeficients
+}
 
 
 
-function extract(file){
+function extract(mat){
+    //todo extract rings of samples
+    console.log("Extracting");
 
+    const width = 1454;
+    const height = 1444;
+    const offset_x = 34;
+    const offset_y = 52;
+    //scale
+    const scaled = mat.resize(width, height);
+    //first ring at 1350
+    const ring1 = 1350
+    const size1 = 50;
+    const roi1 = new cv.Rect(width/2+offset_x, ring1+offset_y , size1, size1);
+    const test1 = scaled.getRegion(roi1);
+    console.log(test1.rows);
+    cv.imshow('test1', test1);
+    cv.waitKey();
+    cv.imshow('scaled', scaled);
+    cv.waitKey();
+    //for each ring get coeficients
 }
 
 /*
@@ -17,9 +45,9 @@ function extract(file){
 *               Construct results from comparisons, add image to ordered list .
 *
 */
-function classify(p, a) {
+function classify(m, a) {
     //TODO
-    console.log("In CLASSIFY");
+    console.log("In CLASSIFY: ");
     var results = {};
     //create FILE unique ID
     var dir = "./../../img_lib";
@@ -29,12 +57,8 @@ function classify(p, a) {
         console.log(files.length);
     });
     */
-
-    //load image from temp
-
     //extract features
-
-
+    extract(m);
     //return to results
 
 
@@ -48,7 +72,7 @@ module.exports = {
     /**
      * Classify location based on night sky photo and annotation
      *
-     * @param  {String} image path
+     * @param  {Mat} image OpenCv Mat matrix
      * @param  {Json} annotation
      *
      */

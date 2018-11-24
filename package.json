@@ -20,10 +20,15 @@
     "base-64": "^0.1.0",
     "blob": "0.0.5",
     "bluebird": "^3.5.3",
+    "dominant-color": "0.0.1",
     "express": "^4.16.4",
     "http": "0.0.0",
     "lit-html": "^0.13.0",
     "node-fetch": "^2.3.0",
-    "socket.io": "^2.1.1"
+    "node-gyp": "^3.8.0",
+    "opencv4nodejs": "^4.10.1",
+    "rebuild": "^0.1.2",
+    "socket.io": "^2.1.1",
+    "windows-build-tools": "^5.0.0"
   }
 }

@@ -2,6 +2,9 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const fs = require('fs');
+const cv = require('opencv4nodejs');
+
+
 
 const classifier = require('./my_libs/classificator.js');
 
@@ -108,10 +111,12 @@ function Classification(data) {
             }
         });
     //relative path to image from 'my_libs'
-    var img_path = './../../temp/in_image'+id+'.jpg'
+    var img_path = './../temp/in_image'+id+'.jpg'
     var an = cl.annotation;
     //classify in module
-    var results = classifier.run(img_path, an);
+
+    const image = cv.imread(img_path);
+    var results = classifier.run(image, an);
     //save to library
     //TODO
     //erase from temp

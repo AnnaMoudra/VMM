@@ -128,7 +128,7 @@ let InputImage = class InputImage extends LitHTMLElement {
             padding: 2em;
             margin-left: 1em;
             margin-right: 1em;
-            max-width: 30em;
+            max-width: 24.5em;
             border-radius: 0.5em;
         }
         .label{
@@ -138,7 +138,7 @@ let InputImage = class InputImage extends LitHTMLElement {
         input{
         display: block;
             float: right;
-            margin-left: 0.2em;
+            margin-left: 0em;
             margin-right: 1em;
         }
         </style>

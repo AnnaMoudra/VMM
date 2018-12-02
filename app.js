@@ -68,7 +68,7 @@ function getInfo(data) {
     clients.forEach(
         function (client) {
             if(client.id == id){
-                console.log('info cl ID:', client.id);
+                console.log('Received annotation by ID:', client.id);
                 client.annotation.name = data.name;
                 client.annotation.time = data.date;
                 client.annotation.sqm = parseInt(data.sqm);
@@ -92,7 +92,6 @@ function getImg(data) {
     clients.forEach(
         function (client) {
             if(client.id == id){
-                console.log('cl ID:', client.id);
                 client.socket.emit('goodToClass', true);
             }
         });
@@ -106,7 +105,6 @@ function Classification(data) {
     clients.forEach(
         function (client) {
             if(client.id == id){
-                console.log('cl ID:', client.id);
                 cl = client;
             }
         });

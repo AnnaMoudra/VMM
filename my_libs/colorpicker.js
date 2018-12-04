@@ -56,9 +56,7 @@ function KMeans(points, k, min_diff) {
         }
 
         for (var j = 0; j < plen; j++) {
-            var p = points[j]
-                , smallest_distance = 10000000
-                , idx = 0;
+            var p = points[j], smallest_distance = 10000000, idx = 0;
             for (var i = 0; i < k; i++) {
                 var distance = squareEuclidianDistance(p, clusters[i][0]);
                 if (distance < smallest_distance) {
@@ -72,7 +70,6 @@ function KMeans(points, k, min_diff) {
         var diff = 0;
         for (var i = 0; i < k; i++) {
             var old = clusters[i]
-                , list = plists[i]
                 , center = calculateCenter(plists[i], 3)
                 , new_cluster = [center, (plists[i])]
                 , dist = squareEuclidianDistance(old[0], center);
@@ -92,11 +89,10 @@ function findRatio(data, points){
 
     for(var k = 0; k < data.length; k++){
         var p = data[k];
-        //console.log(p, points[0], points[1]);
+
         distA = squareEuclidianDistance(points[0], p);
         distB = squareEuclidianDistance(points[1], p);
 
-        //console.log(distA, distB);
         if(parseFloat(distB) - parseFloat(distA) < 1e-7 ){
             pA += 1;
         }
@@ -172,6 +168,8 @@ function findMatch(color) {
             }
         }
     }
+
+    console.log("matched: ", color, " to ", coords.color);
 
     return coords;
 }

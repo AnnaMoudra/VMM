@@ -115,6 +115,12 @@ function Classification(data) {
 
     const image = cv.imread(img_path);
     var results = classifier.run(image, an);
+    console.log('results');
+    for(var j = 0; j < results.pictures; j++){
+        var filename = results.pictures[j];
+        console.log(filename)
+    }
+    console.log(filename)
     //save to library
     //TODO
     //erase from temp

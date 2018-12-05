@@ -398,7 +398,8 @@ function classify(m, a) {
     //TODO
     console.log("In CLASSIFY: ");
     var results = {
-        in_order: null,
+        order: null,
+        count: 0,
         sqm_guess: null,
         pictures: []
     };
@@ -426,7 +427,6 @@ function classify(m, a) {
         order = {
             items: []
         }
-
         console.log("Creating order file");
         var jsonData = JSON.stringify(order);
         fs.writeFileSync('./../order.txt', jsonData);
@@ -446,8 +446,9 @@ function classify(m, a) {
     var curr_res;
     var worse = 0;
     var new_ord = 0;
+    var k = 0;
     if(lib.length > 0){
-        for(var k = 0; k < lib.length; k++){
+        for(k = 0; k < lib.length; k++){
             //
             curr_ID = lib[k].id;
             console.log("lib[k]", lib[k]);
@@ -461,6 +462,7 @@ function classify(m, a) {
             if(worse == 1){
                 //jdeme dal
                 console.log("Our pic is worse than: "+ curr_ID);
+                new_ord = k+1;
             }
             else{
                 console.log("Worse value: "+ worse)
@@ -476,15 +478,19 @@ function classify(m, a) {
         id: maxID
     }
 
+    //shift WORSE pictures in lib by one
     for(var j = 0; j < lib.length; j++){
         var ord = lib[j].order;
+
         if(ord >= new_ord){
             lib[j].order = ord+1;
         }
     }
 
+    //insert new order to lib
     lib[lib.length] = new_item;
     order.items = lib;
+    //sort items by ORDER
     order.items.sort(predicateBy("order"));
     //save NEW order
     var jsonData = JSON.stringify(order);
@@ -495,42 +501,74 @@ function classify(m, a) {
     });
 
     //return 10 or less best matches
-    results.in_order = new_ord;
+    results.order = new_ord+1;
+    results.count = maxID+1;
+
     if(new_ord < 4){
+        console.log('new_ord < 4: ', new_ord)
         if(lib.length > 10){
+            console.log('lib.length > 10: ', lib.length)
             for(var j = 0; j < 10; j++){
-                var filename = order.items[j].id+'.jpg'
-                results.pictures[j] = filename;
+                var it = {
+                    filename:"",
+                    order: 0
+                }
+                it.filename = order.items[j].id+'.jpg';
+                it.order = order.items[j].order;
+                results.pictures[j] = it;
             }
         }
         else{
+            console.log('lib.length <= 10: ', lib.length)
             for(var j = 0; j < lib.length; j++){
-                var filename = order.items[j].id+'.jpg'
-                results.pictures[j] = filename;
+                var it = {
+                    filename:"",
+                    order: 0
+                }
+                it.filename = order.items[j].id+'.jpg';
+                it.order = order.items[j].order;
+                results.pictures[j] = it;
             }
         }
     }
     else{
+        console.log('new_ord >= 4: ', new_ord)
         if(lib.length > new_ord+6){
             //tzn prvek neni uplne na konci
             for(var j = new_ord-4; j < new_ord+6; j++){
-                var filename = order.items[j].id+'.jpg'
-                results.pictures[j] = filename;
+                var it = {
+                    filename:"",
+                    order: 0
+                }
+                it.filename = order.items[j].id+'.jpg';
+                it.order = order.items[j].order;
+                results.pictures[j] = it;
             }
         }
         else{
             if(lib.length > 10){
+                console.log('lib.length > 10: ', lib.length)
                 //prvek je dost na konci a muzeme vzit odzadu 10
                 for(var j = lib.length-10; j < lib.length; j++){
-                    var filename = order.items[j].id+'.jpg'
-                    results.pictures[j] = filename;
+                    var it = {
+                        filename:"",
+                        order: 0
+                    }
+                    it.filename = order.items[j].id+'.jpg';
+                    it.order = order.items[j].order;
+                    results.pictures[j] = it;
                 }
             }
             else {
                 //vezmeme vsechno co mame
                 for(var j = 0; j < lib.length; j++){
-                    var filename = order.items[j].id+'.jpg'
-                    results.pictures[j] = filename;
+                    var it = {
+                        filename:"",
+                        order: 0
+                    }
+                    it.filename = order.items[j].id+'.jpg';
+                    it.order = order.items[j].order;
+                    results.pictures[j] = it;
                 }
             }
 
@@ -562,7 +600,7 @@ module.exports = {
 
 var main = function(image, annotation) {
     console.log("Classify night sky image");
-    classify(image, annotation);
+    return classify(image, annotation);
 }
 
 

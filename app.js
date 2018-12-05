@@ -46,7 +46,7 @@ var clients = [];
 */
 function clientConnection(socket){
     console.log('New browser instance');
-    var new_id = Math.floor(Math.random()*1000);
+    var new_id = Math.floor(Math.random()*100000);
     var cl = new Client(new_id, socket);
     var id_data = {
         id: new_id
@@ -115,20 +115,40 @@ function Classification(data) {
 
     const image = cv.imread(img_path);
     var results = classifier.run(image, an);
-    console.log('results');
-    for(var j = 0; j < results.pictures; j++){
-        var filename = results.pictures[j];
-        console.log(filename)
-    }
-    console.log(filename)
-    //save to library
-    //TODO
+
     //erase from temp
-    var path = './../temp/in_image'+id+'.jpg'
-    //TODO
+    fs.unlinkSync(img_path);
     //send results to client
     //TODO
-    cl.socket.emit('results');
+    var client_data = {
+        pic_order: results.order,
+        all_DB: results.count,
+        picture_data: []
+    }
+    var prefix = 'data:image/jpeg;base64,';
+    var res_path = './../img_lib/';
+    console.log('results');
+    console.log('# pics: ', results.pictures.length);
+    for(var j = 0; j < results.pictures.length; j++){
+        console.log(results.pictures[j]+'\n');
+        var temp = cv.imread(res_path+results.pictures[j].filename);
+        if(temp.cols > 500){
+            var ratio = 500/temp.rows;
+            temp = temp.rescale(ratio);
+            console.log('New image size: ', temp.rows +' x '+ temp.cols);
+        }
 
+        const outBase64 =  cv.imencode('.jpg', temp).toString('base64'); // Perform base64 encoding
+        var it = {
+            order: results.pictures[j].order,
+            picture: prefix+outBase64
+        }
+
+        client_data.picture_data[j] = ( it );
+    }
+
+    cl.socket.emit('results', JSON.parse(JSON.stringify(client_data)));
+    console.log("Emmitting results to: ", cl.id);
+    console.log(client_data.picture_data[0].picture.length);
 }
 

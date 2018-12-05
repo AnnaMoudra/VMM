@@ -6,6 +6,12 @@ class AnnotationData {
         this.sqm = "";
     }
 }
+class ResultData {
+    constructor() {
+        this.order = 0;
+        this.count = 0;
+    }
+}
 /**
  * Client  - socket.io endpoint
  **/
@@ -34,6 +40,7 @@ export class Client {
 class DataHandler {
     constructor() {
         this.annotationData = new AnnotationData();
+        this.resultData = new ResultData();
         this.myImage = '';
         this.class = false;
     }
@@ -106,6 +113,26 @@ class Renderer {
         renderer.dataHandler.class = true;
         renderer.refreshPage();
     }
+    handleResults(data) {
+        /*
+        *         pic_order: results.order,
+        all_DB: results.count,
+        picture_data: []*/
+        console.log("Received results: ");
+        console.log(JSON.stringify(data));
+        var temp = JSON.stringify(data);
+        const dat = JSON.parse(temp);
+        //this.dataHandler.resultData = new ResultData();
+        renderer.dataHandler.resultData.order = dat.pic_order;
+        renderer.dataHandler.resultData.count = dat.all_DB;
+        renderer.dataHandler.resultData.pictures = dat.picture_data;
+        renderer.renderResults();
+        //setTimeout(function(){}, 3000);
+        //var myResText = document.getElementsByTagName('result-text') as NodeListOf<HTMLElement>;
+        //var myResView = document.getElementsByTagName('result-view') as NodeListOf<HTMLElement>;
+        //renderer.loadRenderImage(myResText.item(0));
+        //renderer.loadRenderImages(myResView.item(0));
+    }
     /**
      * Handle signals from Users input
      **/
@@ -151,44 +178,50 @@ class Renderer {
         }
         canvas{
             background-color: rgba(255,41,103,0.26);         
-            margin-left: 1em;
-            margin-right: 1em;
-            max-width: 30em;
-            border-radius: 0.02em;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 90%;
+            width: 30em;
+            display: block;
+        }
+        .buttonWrapper {
+            margin-top: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
         }
         .send_btn{
-            background-color: #51a04d;         
+            background-color: #0b64b0;         
             margin-left: 1em;
             margin-right: 1em;
             max-width: 8em;
             font-weight: bolder;
             border: none;
-            padding: 0.5em;
-            color: #f2ffeb;
-            border-radius: 0.5em;
+            padding: 0.8em;
+            color: #fff;
+            border-radius: 3px;
         }
         
         .class_btn{
-            background-color: #d88a18;         
+            background-color: #b51e7a;         
             margin-left: 1em;
             margin-right: 1em;
             max-width: 8em;
             font-weight: bolder;
             border: none;
-            padding: 0.5em;
-            color: #fffdd5;
-            border-radius: 0.5em;
+            padding: 0.8em;
+            color: #fff;
+            border-radius: 3px;
         }
         
         </style>
         <h2>SkyQuality: light pollution classifier</h2>
         <input-annotation></input-annotation>
-        <br>
         <input-image></input-image>
         <br>
         <canvas id="preview", width="300", height="300", style="border:1px solid #d3d3d3;">
         Your browser does not support the HTML5 canvas tag.
         </canvas>
+        <div class="buttonWrapper">
         <button class="send_btn" type="submit" id="send_image" value="Send" on-click="${(e) => {
             e.preventDefault();
             this.sendData('img');
@@ -201,7 +234,7 @@ class Renderer {
         }}"
         double-click="${(e) => {
             e.preventDefault();
-        }}" >Classify</button>
+        }}" >Classify</button></div>
         
         `;
         render(main, document.body);
@@ -260,8 +293,93 @@ class Renderer {
     /**
      * Render results of classification
      **/
+    loadRenderImage(element) {
+        console.log(element.shadowRoot.childNodes);
+        var shadow = element.shadowRoot;
+        var myDiv = element.shadowRoot.childNodes.item(3);
+        console.log(myDiv);
+        var ctx = myDiv.querySelector('#submitted').getContext('2d');
+        var img = new Image;
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0); // Or at whatever offset you like
+        };
+        img.src = renderer.dataHandler.myImage;
+    }
+    loadRenderImages(element) {
+        var pictures = renderer.dataHandler.resultData.pictures;
+        for (var j = 0; j < pictures.length; j++) {
+            var myCanvas = element.shadowRoot.getElementById('can_' + j.toString());
+            var ctx = myCanvas.getContext('2d');
+            var img = new Image;
+            img.onload = function () {
+                ctx.drawImage(img, 0, 0); // Or at whatever offset you like
+            };
+            img.src = pictures[j];
+        }
+    }
+    loadImages() {
+        var wrapper = document.getElementById("wrapper");
+        console.log(wrapper);
+        var main = '<p>These are the closest results to your photo (sorted db preview):</p>\n<br>';
+        var pictures = renderer.dataHandler.resultData.pictures;
+        for (var j = 0; j < pictures.length; j++) {
+            var add = '<img src="' + renderer.dataHandler.myImage + '", width="300", style="border:1px solid #d3d3d3;">\n<br>';
+            main += add;
+            /*
+            <canvas id="can_0", width="150", height="150", style="border:1px solid #d3d3d3;">
+                Your browser does not support the HTML5 canvas tag.
+            </canvas>
+            <br>
+            var myCanvas = document.getElementById('can_'+j.toString()) as  HTMLCanvasElement;
+            var ctx = myCanvas.getContext('2d');
+            var img = new Image;
+            img.onload = function(){
+                ctx.drawImage(img,0,0); // Or at whatever offset you like
+            };
+            img.src = pictures[j];
+            */
+        }
+        wrapper.innerHTML = main;
+    }
     renderResults() {
+        const main = html `
+        <style>
+        body{
+            background-image: url('../bg_img/bg90m.png');
+            font-family: Helvetica;
+        }
+
+        h2{
+            margin-top: 1em;
+            margin-left: 1em;
+            margin-right: 1em;
+            color: rgba(23,23,26,0.89);
+        }
+        
+        h3{
+            margin-top: 3em;
+            margin-left: 3em;
+            margin-right: 1em;
+            color: rgb(241,105,83);
+        }
+        
+        body{
+            background-color: #deecff;
+        }
+        
+        </style>
+        
+        <h2>SkyQuality: light pollution classifier</h2>
+        <br>
+        <result-text></result-text>
+        <result-view></result-view>
+        
+        
+      
+        `;
+        render(main, document.body);
     }
 }
+//
 export let renderer = new Renderer();
 //# sourceMappingURL=renderer.js.map

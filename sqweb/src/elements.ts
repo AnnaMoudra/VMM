@@ -34,13 +34,18 @@ export class InputAnnotation extends LitHTMLElement{
         body{
             font-family: Helvetica;
         }
-        div{
+        div{        
             padding: 2em;
-            margin-left: 1em;
-            margin-right: 1em;
-            background-color: rgba(156,200,255,0.68);
-            max-width: 20em;
-            border-radius: 0.5em;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: #fff;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .formWrapper {
+        max-width: 300px;
+        text-align: left;
         }
         
         .label{
@@ -48,7 +53,7 @@ export class InputAnnotation extends LitHTMLElement{
             
         }
         input{
-        display: block;
+            display: block;
             float: right;
             margin-left: 0.2em;
             margin-right: 1em;
@@ -59,24 +64,26 @@ export class InputAnnotation extends LitHTMLElement{
         <br>
                 
         <div class="annotationInput" name="annotationInput">
-            <label class="label" for="text">Name:</label>
-            <input type="text" name="name_input" id="name_input" value="${renderer.dataHandler.annotationData.name}" 
-            on-change="${(e) => this.saveName(e)}"
-            />
-        <br>
-        <br>
-        
-            <label class="label" for="text">SQM value:</label>
-            <input type="text" name="sqm_input" id="sqm_input" value="${renderer.dataHandler.annotationData.sqm}" 
-            on-change="${(e) => this.saveSQM(e)}"
-            />
-        <br>
-        <br>
-        
-            <label class="label" for="text">Time:</label>
-            <input type="datetime-local" name="time_input" id="time_input" value="${renderer.dataHandler.annotationData.time}" 
-            on-change="${(e) => this.saveTime(e)}"
-            />
+            <div class="formWrapper">
+                <label class="label" for="text">Name:</label>
+                <input type="text" name="name_input" id="name_input" value="${renderer.dataHandler.annotationData.name}" 
+                on-change="${(e) => this.saveName(e)}"
+                />
+            <br>
+            <br>
+            
+                <label class="label" for="text">SQM value:</label>
+                <input type="text" name="sqm_input" id="sqm_input" value="${renderer.dataHandler.annotationData.sqm}" 
+                on-change="${(e) => this.saveSQM(e)}"
+                />
+            <br>
+            <br>
+            
+                <label class="label" for="text">Time:</label>
+                <input type="datetime-local" name="time_input" id="time_input" value="${renderer.dataHandler.annotationData.time}" 
+                on-change="${(e) => this.saveTime(e)}"
+                />
+            </div>
             
         </div>`;
     }
@@ -133,34 +140,166 @@ export class InputImage extends LitHTMLElement{
             font-family: Helvetica;
         }
         div{
-            background-color: rgba(255,149,36,0.55);         
+            background-color: #000;         
             padding: 2em;
-            margin-left: 1em;
-            margin-right: 1em;
-            max-width: 24.5em;
-            border-radius: 0.5em;
+            margin-left: auto;
+            margin-right: auto;
+            width: 90%;
+            color: #fff;
+        }
+        .formWrapper {
+            max-width: 400px;
+            text-align: left;
         }
         .label{
             margin-left: 1em;
             
         }
         input{
-        display: block;
+            display: block;
             float: right;
             margin-left: 0em;
             margin-right: 1em;
         }
         </style>
-                <br>
         <div class="fileInput" name="fileInput">
+        <div class="formWrapper">
             <label class="label" for="text">Load image:</label>
             <input type="file" name="img_input" id="img_input" value="${renderer.dataHandler.myImage}" on-change="${(e) => {
             this.uploadImage(e);
         }}"/>
+            </div>
         </div>
-        <br>
         
         
         `;
+    }
+}
+
+
+@customElement()
+export class ResultText extends  LitHTMLElement{
+
+    constructor() {
+        super();
+    }
+
+
+    render(){
+        return html`
+        <style>
+        body{
+            width: 300px;
+            font-family: Helvetica;
+        }
+        div{
+            background-color: #fff;         
+            padding: 2em;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        img {
+            max-width: 90%;
+            max-height: 60vh;
+        }
+
+        </style>
+          <div id="div_submitted">
+            <p>Your submitted photo:</p>
+            <img src="${renderer.dataHandler.myImage}">
+            <br>
+            <p>This photo has been classified as the <b>${renderer.dataHandler.resultData.order}.</b> best, out of
+             the ${renderer.dataHandler.resultData.count} photos currently stored in the database. </p>
+        </div>
+    `;
+    }
+}
+
+
+@customElement()
+export class ResultView extends  LitHTMLElement{
+
+    constructor() {
+        super();
+    }
+
+    predicateBy(prop){
+        return function(a,b){
+            if( a[prop] > b[prop]){
+                return 1;
+            }else if( a[prop] < b[prop] ){
+                return -1;
+            }
+            return 0;
+        }
+    }
+
+    loadImages(e){
+        console.log(e);
+        var wrapper = e.target.previousElementSibling;
+        console.log(wrapper);
+        var main='<span>These are the closest results to your photo (sorted db preview):</span>\n<br>';
+        var pictures = renderer.dataHandler.resultData.pictures;
+        pictures.sort(this.predicateBy('order'));
+
+        for(var j = 0; j < pictures.length; j++){
+            var add = '<div class="image">' +
+                '<span>'+(parseInt(renderer.dataHandler.resultData.pictures[j].order)+1).toString()+'</span>' +
+                '<img src="'+renderer.dataHandler.resultData.pictures[j].picture.toString()+'"></div>';
+
+            main += add;
+        }
+        wrapper.innerHTML = main;
+    }
+
+    render() {
+        const main = html`
+        <style>
+        body{
+            width: 300px;
+            font-family: Helvetica;
+        }
+        div#wrapper{
+            background-color: #333;         
+            padding: 2em;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 90%;
+            display:flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            color: #fff;
+        }
+        
+        .image{
+            padding: 2rem;
+            flex-basis: 20%;            
+        }
+        
+        .image img {
+            width: 90%;
+            max-width: 400px;
+            margin-left: 1rem;
+            border-color: black;
+            border-width: 25px;
+            border-style: solid;
+        }
+        
+        #wrapper > span {
+            flex-basis: 100%;        
+        }
+
+        </style>
+        
+        <div id="wrapper">
+        </div class="">
+        <img src="${renderer.dataHandler.myImage}", width="0", style="border:1px solid #d3d3d3;", onload="${(e)=>this.loadImages(e)}">
+        <br>
+        `;
+
+        return main;
     }
 }

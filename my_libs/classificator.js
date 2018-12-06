@@ -13,10 +13,23 @@ function GetCoef(color){
 }
 
 
-function getDominantColors(sample, i, ring){
+function getDominantColors(sample, i, ring, maxID){
     //todo for each img in ring get dominant, if dark or white then throw away
     console.log("\nSample: ", i);
     sample.cvtColor(cv.COLOR_BGR2RGB);
+
+    //
+    var dir = './../samples_lib/'+maxID;
+    if (!fs.existsSync(dir)){
+        fs.mkdirSync(dir);
+    }
+
+    cv.imwriteAsync(dir+'/'+ring+'_'+i+'.png', sample, function (err){
+        if(err){
+            console.log(err);
+        }
+    });
+
     var c1OK = 1, c2OK = 1;
     var coef = 0;
 
@@ -30,8 +43,9 @@ function getDominantColors(sample, i, ring){
     else{
         treshold = 150;
     }
-    const path = './../temp_draw/sample'+i+'.png'
+    //const path = './../temp_draw/sample'+i+'.png'
 
+    console.log("\n\ngoto picking dominant colors: ");
     var res = cp.pick(sample);
     var c1 = res[0];
     var c2 = res[1];
@@ -178,8 +192,140 @@ function drawRings(image ,radius, count, size, offset, dim){
     cv.imwrite('./../temp_draw/img.jpg', image);
 }
 
+function extractRings4(image ,radius, count, size, offset, dim, id){
+    var rect1 = {
+        r: Math.floor(radius/1.08),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: Math.floor(size*1.2)
+    }
 
-function extractRings(image ,radius, count, size, offset, dim){
+    var rect2 = {
+        r: Math.floor(radius/1.2),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: size
+    }
+
+    var rect3 = {
+        r: Math.floor(radius/1.8),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: Math.floor(size*0.9)
+    }
+
+    var rect4 = {
+        r: Math.floor(radius/2.3),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: Math.floor(size*0.9)
+    }
+
+    console.log("Extracting");
+    var center = {
+        x: Math.floor(dim.width/2-offset.xx),
+        y: Math.floor(dim.height/2)
+    }
+    const center_pt = new cv.Point(center.x, center.y);
+
+    var angle = Math.floor(360/count);
+    console.log("Angle: "+angle );
+
+    var ring4res = 0;
+    var coefSum4 = 0;
+    var okSamples4= 0;
+    for(var i = 0; i < count; i++){
+        var x = (rect1.r)*Math.sin(angle*i)+center.x-rect1.s/2;
+        var y = (rect1.r)*Math.cos(angle*i)+center.y-rect1.s/2;
+        var rect = new cv.Rect(x,y, rect1.s, rect1.s);
+        //image.drawRectangle (rect , new cv.Vec(100, 100, 255) , 3);
+
+        //test get dom color
+        const sample = image.getRegion(rect);
+        var coef = getDominantColors(sample, i, 4, id);
+        if(coef != -1){
+            okSamples4 += 1;
+            coefSum4 += coef;
+        }
+        console.log("\t\tSample "+i+" coeficient: ", coef);
+    }
+
+
+
+    var ring3res = 0;
+    var coefSum3 = 0;
+    var okSamples3= 0;
+    for(var i = 0; i < count; i++){
+        var x = (rect2.r)*Math.sin(angle*i)+center.x-rect2.s/2;
+        var y = (rect2.r)*Math.cos(angle*i)+center.y-rect2.s/2;
+        var rect = new cv.Rect(x,y, rect2.s, rect2.s);
+        //image.drawRectangle (rect , new cv.Vec(100, 100, 255) , 3);
+
+        //test get dom color
+        const sample = image.getRegion(rect);
+        var coef = getDominantColors(sample, i, 3, id);
+        if(coef != -1){
+            okSamples3 += 1;
+            coefSum3 += coef;
+        }
+        console.log("\t\tSample "+i+" coeficient: ", coef);
+    }
+
+
+
+    var ring2res = 0;
+    var coefSum2 = 0;
+    var okSamples2= 0;
+    for(var i = 0; i < count; i++){
+        //                                    shift from 0,0 to the center of
+        var x = (rect3.r)*Math.sin(angle*i) + center.x - rect3.s/2;
+        var y = (rect3.r)*Math.cos(angle*i) + center.y - rect3.s/2;
+        var rect = new cv.Rect(x,y, rect3.s, rect3.s);
+
+        const sample = image.getRegion(rect);
+        var coef = getDominantColors(sample, i, 2, id);
+        if(coef != -1){
+            okSamples2 += 1;
+            coefSum2 += coef;
+        }
+        console.log("\t\tSample "+i+" coeficient: ", coef);
+    }
+
+
+
+    var ring1res = 0;
+    var coefSum1 = 0;
+    var okSamples1 = 0;
+    for(var i = 0; i < count; i++){
+        var x = (rect4.r)*Math.sin(angle*i)+center.x-rect4.s/2;
+        var y = (rect4.r)*Math.cos(angle*i)+center.y-rect4.s/2;
+        var rect = new cv.Rect(x,y, rect4.s, rect4.s);
+        //image.drawRectangle (rect , new cv.Vec(0, 0, 0) , 3);
+
+        const sample = image.getRegion(rect);
+        var coef = getDominantColors(sample, i, 1, id);
+        if(coef != -1){
+            okSamples1 += 1;
+            coefSum1 += coef;
+        }
+        console.log("\t\tSample "+i+" coeficient: ", coef);
+    }
+
+    ring4res = coefSum4/okSamples4;
+    console.log("\tFourth ring: " , ring4res);
+    ring3res = coefSum3/okSamples3;
+    console.log("\tThird ring: " , ring3res);
+    ring2res = coefSum2/okSamples2;
+    console.log("\tSecond ring: " , ring2res);
+    ring1res = coefSum1/okSamples1;
+    console.log("\tInner ring: " , ring1res);
+
+
+    return [ring4res, ring3res, ring2res, ring1res];
+}
+
+
+function extractRings(image ,radius, count, size, offset, dim, id){
     var rect1 = {
         r: Math.floor(radius/1.08),
         x: dim.width/2+offset.xx,
@@ -222,7 +368,7 @@ function extractRings(image ,radius, count, size, offset, dim){
 
         //test get dom color
         const sample = image.getRegion(rect);
-        var coef = getDominantColors(sample, i, 3);
+        var coef = getDominantColors(sample, i, 3, id);
         if(coef != -1){
             okSamples3 += 1;
             coefSum3 += coef;
@@ -242,7 +388,7 @@ function extractRings(image ,radius, count, size, offset, dim){
         var rect = new cv.Rect(x,y, rect2.s, rect2.s);
 
         const sample = image.getRegion(rect);
-        var coef = getDominantColors(sample, i, 2);
+        var coef = getDominantColors(sample, i, 2, id);
         if(coef != -1){
             okSamples2 += 1;
             coefSum2 += coef;
@@ -262,7 +408,7 @@ function extractRings(image ,radius, count, size, offset, dim){
         //image.drawRectangle (rect , new cv.Vec(0, 0, 0) , 3);
 
         const sample = image.getRegion(rect);
-        var coef = getDominantColors(sample, i, 1);
+        var coef = getDominantColors(sample, i, 1, id);
         if(coef != -1){
             okSamples1 += 1;
             coefSum1 += coef;
@@ -282,8 +428,6 @@ function extractRings(image ,radius, count, size, offset, dim){
 }
 
 function extract(mat, id){
-    //todo extract rings of samples
-
     //Image dimensions used for extractions
     var dim = {
         width: 1454,
@@ -299,11 +443,11 @@ function extract(mat, id){
 
     const base_radius = 1350;
 
-    //const test1 = scaled.getRegion(roi1);
     //drawRings(scaled, base_radius/2, 11, 60, offset, dim);
-    const result = extractRings(scaled, base_radius/2, 11, 60, offset, dim);
+    //const result = extractRings(scaled, base_radius/2, 11, 60, offset, dim, id);
 
-    //todo extractRing()
+    //
+    const result = extractRings4(scaled, base_radius/2, 11, 60, offset, dim, id);
 
     return result;
 }
@@ -353,6 +497,45 @@ function LoadSortedLibrary(items){
     return lib;
 }
 
+function compareResults4(lib, result){
+    var worse = 0;
+    console.log(lib.features);
+    var lib_feat = lib.features;
+    var res_feat = result.features;
+    //[ring3res, ring2res, ring1res];
+    var ring3 = lib_feat[0] - res_feat[0];
+    var ring2 = lib_feat[1] - res_feat[1];
+    var ring1 = lib_feat[2] - res_feat[2];
+    var ring0 = lib_feat[3] - res_feat[3];
+
+    var weight = [0.9, 1, 1.2, 1.2];
+    var res = ring3*weight[0] + ring2*weight[1] + ring1* weight[2] + ring0* weight[3];
+
+    console.log('Comparison:');
+    console.log('ring 3: ', ring3);
+    console.log('ring 2: ', ring2);
+    console.log('ring 1: ', ring1);
+    console.log('ring 0: ', ring0);
+
+    console.log('Comparison after Weights:');
+    console.log('ring 3: ', ring3*weight[0]);
+    console.log('ring 2: ', ring2*weight[1]);
+    console.log('ring 1: ', ring1*weight[2]);
+    console.log('ring 1: ', ring0*weight[3]);
+
+    console.log('\tweighted res: ', res);
+
+    if(res > 0){
+        worse = 1
+    }
+    else{
+        worse = -1
+    }
+
+    return worse;
+}
+
+
 function compareResults(lib, result){
     var worse = 0;
     console.log(lib.features);
@@ -363,13 +546,18 @@ function compareResults(lib, result){
     var ring2 = lib_feat[1] - res_feat[1];
     var ring1 = lib_feat[2] - res_feat[2];
 
-    var weight = [1, 1, 1];
+    var weight = [0.8, 1, 1.5];
     var res = ring3*weight[0] + ring2*weight[1] + ring1* weight[2];
 
     console.log('Comparison:');
     console.log('ring 3: ', ring3);
     console.log('ring 2: ', ring2);
     console.log('ring 1: ', ring1);
+
+    console.log('Comparison after Weights:');
+    console.log('ring 3: ', ring3*weight[0]);
+    console.log('ring 2: ', ring2*weight[1]);
+    console.log('ring 1: ', ring1*weight[2]);
 
     console.log('\tweighted res: ', res);
 
@@ -405,12 +593,13 @@ function classify(m, a) {
     };
 
 
-    //extract features
-    var feature_vector = extract(m);
-
-
     //create unique ID
     var maxID = GetMaxID();
+    //extract features
+    var feature_vector = extract(m, maxID);
+
+
+
     console.log("Image will be saved as: "+maxID+".jpg");
     var result = {
         id: maxID,
@@ -457,7 +646,8 @@ function classify(m, a) {
             worse = 0;
             console.log("lib data", data);
             curr_res = JSON.parse(data.replace(/\s/g, ""));
-            worse = compareResults(curr_res, result);
+            //worse = compareResults(curr_res, result);
+            worse = compareResults4(curr_res, result);
 
             if(worse == 1){
                 //jdeme dal
@@ -535,28 +725,28 @@ function classify(m, a) {
         console.log('new_ord >= 4: ', new_ord)
         if(lib.length > new_ord+6){
             //tzn prvek neni uplne na konci
-            for(var j = new_ord-4; j < new_ord+6; j++){
+            for(var k = 0, j = new_ord-4; j < new_ord+6; j++, k++){
                 var it = {
                     filename:"",
                     order: 0
                 }
                 it.filename = order.items[j].id+'.jpg';
                 it.order = order.items[j].order;
-                results.pictures[j] = it;
+                results.pictures[k] = it;
             }
         }
         else{
             if(lib.length > 10){
                 console.log('lib.length > 10: ', lib.length)
                 //prvek je dost na konci a muzeme vzit odzadu 10
-                for(var j = lib.length-10; j < lib.length; j++){
+                for(var k=0, j = lib.length-10; j < lib.length; j++, k++){
                     var it = {
                         filename:"",
                         order: 0
                     }
                     it.filename = order.items[j].id+'.jpg';
                     it.order = order.items[j].order;
-                    results.pictures[j] = it;
+                    results.pictures[k] = it;
                 }
             }
             else {

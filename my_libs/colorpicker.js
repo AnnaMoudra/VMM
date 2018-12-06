@@ -31,6 +31,7 @@ function calculateCenter(points, n) {
 
 
 function KMeans(points, k, min_diff) {
+    console.log('KMeans started for ', k);
     plen = points.length;
     clusters = [];
     seen = [];
@@ -49,11 +50,15 @@ function KMeans(points, k, min_diff) {
         }
     }
 
+    console.log('clusters finished');
+
+    var endpoint = 0;
     while (true) {
         plists = [];
         for (var i = 0; i < k; i++) {
             plists.push([]);
         }
+        //console.log('clusters pushed');
 
         for (var j = 0; j < plen; j++) {
             var p = points[j], smallest_distance = 10000000, idx = 0;
@@ -67,16 +72,52 @@ function KMeans(points, k, min_diff) {
             plists[idx].push(p);
         }
 
+
         var diff = 0;
+
         for (var i = 0; i < k; i++) {
-            var old = clusters[i]
-                , center = calculateCenter(plists[i], 3)
-                , new_cluster = [center, (plists[i])]
-                , dist = squareEuclidianDistance(old[0], center);
-            clusters[i] = new_cluster
+            if(Number.isNaN(clusters[i][0][0])){
+                console.log("Breaking ", clusters[i][0][0]);
+                endpoint = 1;
+                break;
+            }
+            var old = clusters[i];
+            var center = calculateCenter(plists[i], 3);
+            var new_cluster = [center, (plists[i])];
+
+
+            //console.log("params ", old[0], center);
+            /*
+            if(old[0][0] = NaN || center[0] == NaN){
+                console.log("\t\t\tgetting NaN ");
+                endpoint = 1;
+                //break;
+            }
+            */
+            var dist = squareEuclidianDistance(old[0], center);
+            clusters[i] = new_cluster;
+
+            /*
+            console.log("in cycle dist ", dist);
+            if(dist == NaN){
+                break;
+            }
+            */
+
+            /*
+            if(diff > dist){
+                diff = diff;
+            }
+            else{
+                diff = dist
+            }
+            */
+            //console.log("in cycle diff ", diff);
             diff = diff > dist ? diff : dist;
         }
-        if (diff < min_diff) {
+        //console.log("diff ", diff);
+        if (diff < min_diff || endpoint == 1) {
+            console.log("final diff ", diff);
             break;
         }
     }
@@ -117,6 +158,7 @@ function pick(m) {
     var data = [];
 
     var k = 0;
+    console.log('picking data')
     for(var i = 0; i < m.rows; i++){
         for(var j = 0; j < m.cols; j++){
             var pixel = m.at(i, j);
@@ -126,6 +168,7 @@ function pick(m) {
     }
 
     var res_col = KMeans(data, 2, 1);
+    console.log('KMeans finished')
     var points = [res_col[0][0], res_col[1][0]];
     var res_ratio = findRatio(data, points);
 

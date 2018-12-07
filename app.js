@@ -60,7 +60,7 @@ function clientConnection(socket){
 
 /*
 *
-* Save image annotation
+* Store image annotation
 *
 */
 function getInfo(data) {
@@ -108,18 +108,18 @@ function Classification(data) {
                 cl = client;
             }
         });
-    //relative path to image from 'my_libs'
+    //relative path to image
     var img_path = './../temp/in_image'+id+'.jpg'
     var an = cl.annotation;
-    //classify in module
 
+    //classify image in module
     const image = cv.imread(img_path);
     var results = classifier.run(image, an);
 
     //erase from temp
     fs.unlinkSync(img_path);
+
     //send results to client
-    //TODO
     var client_data = {
         pic_order: results.order,
         all_DB: results.count,
@@ -149,6 +149,6 @@ function Classification(data) {
 
     cl.socket.emit('results', JSON.parse(JSON.stringify(client_data)));
     console.log("Emmitting results to: ", cl.id);
-    console.log(client_data.picture_data[0].picture.length);
+    //console.log(client_data.picture_data[0].picture.length);
 }
 

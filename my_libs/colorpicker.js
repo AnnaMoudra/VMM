@@ -1,8 +1,20 @@
 const fs = require('fs');
-const dir = './directory';
-
 const cv = require('opencv4nodejs');
-var ColorThief = require('color-thief');
+
+
+function calculateCenter(points, n) {
+    var vals = [];
+    for (var i = 0; i < n; i++) { vals.push(0); }
+    for (var i = 0; i < points.length; i++) {
+        for (var j = 0; j < n; j++) {
+            vals[j] += points[i][j];
+        }
+    }
+    for (var i = 0; i < n; i++) {
+        vals[i] = vals[i] / points.length;
+    }
+    return vals;
+}
 
 function squareEuclidianDistance(a, b){
     var s = 0;
@@ -10,23 +22,6 @@ function squareEuclidianDistance(a, b){
         s += Math.pow(a[i] - b[i], 2)
     }
     return Math.sqrt(s);
-}
-
-
-function calculateCenter(points, n) {
-    var vals = []
-        , plen = 0;
-    for (var i = 0; i < n; i++) { vals.push(0); }
-    for (var i = 0, l = points.length; i < l; i++) {
-        plen++;
-        for (var j = 0; j < n; j++) {
-            vals[j] += points[i][j];
-        }
-    }
-    for (var i = 0; i < n; i++) {
-        vals[i] = vals[i] / plen;
-    }
-    return vals;
 }
 
 
@@ -74,7 +69,6 @@ function KMeans(points, k, min_diff) {
 
 
         var diff = 0;
-
         for (var i = 0; i < k; i++) {
             if(Number.isNaN(clusters[i][0][0])){
                 console.log("Breaking ", clusters[i][0][0]);
@@ -86,33 +80,9 @@ function KMeans(points, k, min_diff) {
             var new_cluster = [center, (plists[i])];
 
 
-            //console.log("params ", old[0], center);
-            /*
-            if(old[0][0] = NaN || center[0] == NaN){
-                console.log("\t\t\tgetting NaN ");
-                endpoint = 1;
-                //break;
-            }
-            */
             var dist = squareEuclidianDistance(old[0], center);
             clusters[i] = new_cluster;
 
-            /*
-            console.log("in cycle dist ", dist);
-            if(dist == NaN){
-                break;
-            }
-            */
-
-            /*
-            if(diff > dist){
-                diff = diff;
-            }
-            else{
-                diff = dist
-            }
-            */
-            //console.log("in cycle diff ", diff);
             diff = diff > dist ? diff : dist;
         }
         //console.log("diff ", diff);
@@ -160,10 +130,9 @@ function pick(m) {
     var k = 0;
     console.log('picking data')
     for(var i = 0; i < m.rows; i++){
-        for(var j = 0; j < m.cols; j++){
+        for(var j = 0; j < m.cols; j++, k++){
             var pixel = m.at(i, j);
             data[k] = [pixel.x, pixel.y, pixel.z];
-            k++;
         }
     }
 
@@ -182,7 +151,7 @@ function pick(m) {
     }
     results[res_col.length] = (res_ratio[0]);
     results[res_col.length + 1] = (res_ratio[1]);
-    //return hex;
+
     return results;
 }
 
@@ -190,7 +159,6 @@ function pick(m) {
 function findMatch(color) {
     var col = [color[2], color[1], color[0]];
     var scale = cv.imread('./../scales/scale_rgb.jpg');
-    var pixels = [];
     var minimum = 1e6;
     var coords = {
         row: 0,
@@ -229,9 +197,9 @@ module.exports = {
     },
 
     /**
-     * Pick dominant colors from sample
+     * Finds coordinates on color scale for dominant color
      *
-     * @param  {Mat} image sample as OpenCV Mat matrix
+     * @param  {RGB float vector} RGB color
      *
      */
     findMatch:  function(color){

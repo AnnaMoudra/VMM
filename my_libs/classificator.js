@@ -1,5 +1,4 @@
 const fs = require('fs');
-const dir = './directory';
 const cp = require('./colorpicker.js');
 const cv = require('opencv4nodejs');
 
@@ -11,7 +10,6 @@ function GetCoef(color){
     console.log("final color: ", coords.color);
     return coords.row;
 }
-
 
 function getDominantColors(sample, i, ring, maxID){
     //todo for each img in ring get dominant, if dark or white then throw away
@@ -34,8 +32,11 @@ function getDominantColors(sample, i, ring, maxID){
     var coef = 0;
 
     var treshold = 0;
-    if(ring == 3 ){
+    if(ring == 4 ){
         treshold = 270;
+    }
+    if(ring == 3 ){
+        treshold = 260;
     }
     else if(ring == 2 ){
         treshold = 220;
@@ -83,13 +84,13 @@ function getDominantColors(sample, i, ring, maxID){
         }
 
         //kontrola svetle modreho okraje
-        if(ring == 3 && c1[2] > 150 && (c1[0] > 100 || c1[1] > 200)){
+        if((ring == 4) && c1[2] > 150 && (c1[0] > 100 || c1[1] > 200)){
             r1 = 0;
             r2 = 1;
             c1OK = 0;
         }
 
-        if(ring == 3 && c2[2] > 150 && (c2[0] > 100 || c2[1] > 200)){
+        if((ring == 4) && c2[2] > 150 && (c2[0] > 100 || c2[1] > 200)){
             r2 = 0;
             r1 = 1;
             c2OK = 0;
@@ -146,27 +147,18 @@ function drawRings(image ,radius, count, size, offset, dim){
 
     image.drawCircle ( center_pt, 10, new cv.Vec(0, 0, 255) , 8);
 
-    //image.drawCircle ( center_pt, radius , new cv.Vec(0, 255, 255) , 8);
-    var ring3res = 0;
-    var coefSum = 0;
-    var okSamples = 0;
+    image.drawCircle ( center_pt, rect1.r , new cv.Vec(255, 255, 255) , 8);
+
+    image.drawCircle ( center_pt, radius , new cv.Vec(0, 255, 255) , 8);
+
     for(var i = 0; i < count; i++){
         var x = (rect1.r)*Math.sin(angle*i)+center.x-rect1.s/2;
         var y = (rect1.r)*Math.cos(angle*i)+center.y-rect1.s/2;
         var rect = new cv.Rect(x,y, rect1.s, rect1.s);
-        //image.drawRectangle (rect , new cv.Vec(100, 100, 255) , 3);
+        image.drawRectangle (rect , new cv.Vec(100, 100, 255) , 3);
 
-        //test get dom color
-        const test_sample = image.getRegion(rect);
-        var coef = getDominantColors(test_sample, i, 3);
-        if(coef != -1){
-            okSamples += 1;
-            coefSum += coef;
-        }
-        console.log("\t\tSample "+i+" coeficient: ", coef);
     }
-    ring3res = coefSum/okSamples;
-    console.log("\tThird ring: " , ring3res);
+
 
 
     image.drawCircle ( center_pt, rect2.r , new cv.Vec(255, 255, 255) , 8);
@@ -188,9 +180,96 @@ function drawRings(image ,radius, count, size, offset, dim){
         image.drawRectangle (rect , new cv.Vec(0, 0, 0) , 3);
     }
     //scale to show
-    const scaled = image.resize(Math.floor(dim.width/2),Math.floor(dim.height/2));
+    //const scaled = image.resize(Math.floor(dim.width/2),Math.floor(dim.height/2));
     cv.imwrite('./../temp_draw/img.jpg', image);
 }
+
+function drawRings4(image ,radius, count, size, offset, dim){
+    var rect1 = {
+        r: Math.floor(radius/1.08),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: Math.floor(size*1.2)
+    }
+
+    var rect2 = {
+        r: Math.floor(radius/1.4),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: size
+    }
+
+    var rect3 = {
+        r: Math.floor(radius/1.8),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: Math.floor(size*0.9)
+    }
+
+    var rect4 = {
+        r: Math.floor(radius/2.5),
+        x: dim.width/2+offset.xx,
+        y: this.r*2+offset.yy,
+        s: Math.floor(size*0.9)
+    }
+
+    console.log("Extracting2");
+    var center = {
+        x: Math.floor(dim.width/2-offset.xx),
+        y: Math.floor(dim.height/2)
+    }
+    const center_pt = new cv.Point(center.x, center.y);
+
+    var angle = Math.floor(360/count);
+    console.log("Angle: "+angle );
+
+    //center
+    image.drawCircle ( center_pt, 10, new cv.Vec(0, 0, 255) , 8);
+
+    //okraj
+    image.drawCircle ( center_pt, radius , new cv.Vec(0, 255, 255) , 8);
+
+    image.drawCircle ( center_pt, rect1.r , new cv.Vec(255, 255, 255) , 8);
+    for(var i = 0; i < count; i++){
+        var x = (rect1.r)*Math.sin(angle*i)+center.x-rect1.s/2;
+        var y = (rect1.r)*Math.cos(angle*i)+center.y-rect1.s/2;
+        var rect = new cv.Rect(x,y, rect1.s, rect1.s);
+        image.drawRectangle (rect , new cv.Vec(100, 100, 255) , 3);
+
+    }
+
+
+    image.drawCircle ( center_pt, rect2.r , new cv.Vec(255, 255, 255) , 8);
+    for(var i = 0; i < count; i++){
+        //                                    shift from 0,0 to the center of
+        var x = (rect2.r)*Math.sin(angle*i) + center.x - rect2.s/2;
+        var y = (rect2.r)*Math.cos(angle*i) + center.y - rect2.s/2;
+        var rect = new cv.Rect(x,y, rect2.s, rect2.s);
+        image.drawRectangle (rect , new cv.Vec(255, 0, 255) , 3);
+    }
+
+
+
+    image.drawCircle ( center_pt, rect3.r , new cv.Vec(255, 255, 255) , 8);
+    for(var i = 0; i < count; i++){
+        var x = (rect3.r)*Math.sin(angle*i)+center.x-rect3.s/2;
+        var y = (rect3.r)*Math.cos(angle*i)+center.y-rect3.s/2;
+        var rect = new cv.Rect(x,y, rect3.s, rect3.s);
+        image.drawRectangle (rect , new cv.Vec(0, 0, 0) , 3);
+    }
+
+    image.drawCircle ( center_pt, rect4.r , new cv.Vec(255, 255, 255) , 8);
+    for(var i = 0; i < count; i++){
+        var x = (rect4.r)*Math.sin(angle*i)+center.x-rect4.s/2;
+        var y = (rect4.r)*Math.cos(angle*i)+center.y-rect4.s/2;
+        var rect = new cv.Rect(x,y, rect4.s, rect4.s);
+        image.drawRectangle (rect , new cv.Vec(0, 0, 0) , 3);
+    }
+    //scale to show
+    //const scaled = image.resize(Math.floor(dim.width/2),Math.floor(dim.height/2));
+    cv.imwrite('./../temp_draw/img4.jpg', image);
+}
+
 
 function extractRings4(image ,radius, count, size, offset, dim, id){
     var rect1 = {
@@ -215,7 +294,7 @@ function extractRings4(image ,radius, count, size, offset, dim, id){
     }
 
     var rect4 = {
-        r: Math.floor(radius/2.3),
+        r: Math.floor(radius/2.5),
         x: dim.width/2+offset.xx,
         y: this.r*2+offset.yy,
         s: Math.floor(size*0.9)
@@ -323,7 +402,6 @@ function extractRings4(image ,radius, count, size, offset, dim, id){
 
     return [ring4res, ring3res, ring2res, ring1res];
 }
-
 
 function extractRings(image ,radius, count, size, offset, dim, id){
     var rect1 = {
@@ -443,11 +521,16 @@ function extract(mat, id){
 
     const base_radius = 1350;
 
-    //drawRings(scaled, base_radius/2, 11, 60, offset, dim);
     //const result = extractRings(scaled, base_radius/2, 11, 60, offset, dim, id);
-
-    //
     const result = extractRings4(scaled, base_radius/2, 11, 60, offset, dim, id);
+
+    /*
+    const scaled2 = mat.resize(dim.width, dim.height);
+    drawRings4(scaled2, base_radius/2, 11, 60, offset, dim);
+    const scaled3 = mat.resize(dim.width, dim.height);
+    drawRings(scaled3, base_radius/2, 11, 60, offset, dim);
+
+     */
 
     return result;
 }
@@ -456,15 +539,12 @@ function GetMaxID(){
     var filesImg = fs.readdirSync('./../img_lib');
     var filesRes = fs.readdirSync('./../result_lib');
     var max = (filesImg.length > filesRes.length) ? filesImg.length : filesRes.length;
-
     return max;
 }
 
 
 function SaveToFile(result, image){
     cv.imwrite('./../img_lib/'+result.id+'.jpg', image);
-
-
     var jsonData = JSON.stringify(result);
     fs.writeFileSync('./../result_lib/'+result.id+'.txt', jsonData);
 }
@@ -497,6 +577,11 @@ function LoadSortedLibrary(items){
     return lib;
 }
 
+/*
+*
+* Compare results from 4 rings.
+*
+*/
 function compareResults4(lib, result){
     var worse = 0;
     console.log(lib.features);
@@ -509,6 +594,13 @@ function compareResults4(lib, result){
     var ring0 = lib_feat[3] - res_feat[3];
 
     var weight = [0.9, 1, 1.2, 1.2];
+
+    if(res_feat[0] < res_feat[2]/2 || lib_feat[0] < lib_feat[2]/2)
+        ring3 = 0;
+
+    if(res_feat[1] < res_feat[3]/2 || lib_feat[1] < lib_feat[3]/2)
+        ring2 = 0;
+
     var res = ring3*weight[0] + ring2*weight[1] + ring1* weight[2] + ring0* weight[3];
 
     console.log('Comparison:');
@@ -597,6 +689,7 @@ function classify(m, a) {
     var maxID = GetMaxID();
     //extract features
     var feature_vector = extract(m, maxID);
+
 
 
 

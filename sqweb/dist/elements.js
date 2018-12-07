@@ -249,7 +249,8 @@ let ResultView = class ResultView extends LitHTMLElement {
         }
         div#wrapper{
             background-color: #333;         
-            padding: 2em;
+            padding: 1em;
+            padding-right: 3em;
             margin-left: auto;
             margin-right: auto;
             max-width: 90%;

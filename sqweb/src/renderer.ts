@@ -16,7 +16,7 @@ class AnnotationData{
 class ResultData{
     order: number = 0;
     count: number = 0;
-    pictures;
+    pictures: [];
 }
 
 /**
@@ -56,7 +56,6 @@ class DataHandler{
     myCanvas: HTMLImageElement;
     class: boolean = false;
 
-
     constructor(){
     }
 
@@ -66,7 +65,6 @@ class DataHandler{
             id: renderer.ID,
             image: this.myImage
         }
-
         return JSON.stringify(img);
     }
 
@@ -77,7 +75,6 @@ class DataHandler{
             name: this.annotationData.name,
             sqm: this.annotationData.sqm
         };
-
         return JSON.stringify(data);
     }
 
@@ -131,7 +128,6 @@ class Renderer{
         this.client.socket.emit(msg, data);
     }
 
-
     /**
      * Re-render InputPage with changes.
      **/
@@ -162,13 +158,16 @@ class Renderer{
         renderer.dataHandler.resultData.pictures = dat.picture_data;
 
         renderer.renderResults();
-        //setTimeout(function(){}, 3000);
-        //var myResText = document.getElementsByTagName('result-text') as NodeListOf<HTMLElement>;
-        //var myResView = document.getElementsByTagName('result-view') as NodeListOf<HTMLElement>;
+        /**
+         * setTimeout(function(){}, 3000);
+         * var myResView = document.getElementsByTagName('result-view') as NodeListOf<HTMLElement>;
+         * var myResText = document.getElementsByTagName('result-text') as NodeListOf<HTMLElement>;
+         * renderer.loadRenderImage(myResText.item(0));
+         * renderer.loadRenderImages(myResView.item(0));
+         */
 
-        //renderer.loadRenderImage(myResText.item(0));
-        //renderer.loadRenderImages(myResView.item(0));
     }
+
     /**
      * Handle signals from Users input
      **/
@@ -439,5 +438,5 @@ class Renderer{
     }
 
 }
-//
+
 export let renderer = new Renderer();

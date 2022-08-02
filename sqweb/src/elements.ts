@@ -102,7 +102,6 @@ export class InputImage extends LitHTMLElement{
         this.img.id = 'imgFile';
     }
 
-
     uploadImage(event){
         var file = event.target.files[0];
         //this.img.src = file.name;
@@ -129,7 +128,6 @@ export class InputImage extends LitHTMLElement{
         else{
             console.log("NOT AN IMAGE")
         }
-
     }
 
     render(){
